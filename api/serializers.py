@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from models import PowerUser
+from .models import PowerUser
 
 class PowerUserSerializer(serializers.ModelSerializer):
     class Meta:
