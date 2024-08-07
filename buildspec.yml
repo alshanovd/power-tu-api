@@ -17,4 +17,5 @@ phases:
       - echo Build completed on `date`
 artifacts:
   files:
-    - target/artifact.zip
+    - '**/*'
+  name: powerTUartifacts-$(date +%Y-%m-%d)
