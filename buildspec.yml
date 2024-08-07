@@ -6,11 +6,12 @@ phases:
       python: 3.x
   pre_build:
     commands:
-      - echo Nothing to do in the pre_build phase...
+      # - echo Nothing to do in the pre_build phase...
       - pip install -r requirements.txt
   build:
     commands:
-      - echo Build started on `date`
+      - printenv
+      - echo Build started on $AWS_REGION
   post_build:
     commands:
       - echo Build completed on `date`
