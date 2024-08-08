@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'power_tu_api',
     'analysis',
     'corsheaders',
+    "django_extensions",
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
