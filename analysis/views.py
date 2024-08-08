@@ -17,7 +17,7 @@ def productsApi(request, id=0):
         products_serializer = ProductsSerializer(data=product_data)
         if products_serializer.is_valid():
             products_serializer.save()
-            return JsonResponse("Added Successfully", safe=False)
+            return JsonResponse(products_serializer.data, safe=False)
         return JsonResponse("Failed to Add", safe=False)
     elif request.method == 'PUT':
         product_data = JSONParser().parse(request)
@@ -25,7 +25,7 @@ def productsApi(request, id=0):
         products_serializer = ProductsSerializer(product, data=product_data)
         if products_serializer.is_valid():
             products_serializer.save()
-            return JsonResponse("Updated Successfully", safe=False)
+            return JsonResponse(products_serializer.data, safe=False)
         return JsonResponse("Failed to Update", safe=False)
     elif request.method == 'DELETE':
         product = Products.objects.get(product_id=id)

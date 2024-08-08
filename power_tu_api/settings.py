@@ -84,11 +84,11 @@ WSGI_APPLICATION = 'power_tu_api.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'db_aab6e3_powertu',
-        'HOST': 'mysql6008.site4now.net',
+        'NAME': 'Power_TU_DB',
+        'HOST': '16.171.18.63',
         'PORT': '3306',
-        'USER': 'aab6e3_powertu',
-        'PASSWORD': 'mmZbE*8hv@zT',
+        'USER': 'power_tu',
+        'PASSWORD': 'power_password',
     }
 }
 
