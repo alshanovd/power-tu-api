@@ -86,7 +86,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'Power_TU_DB',
-        'HOST': '16.171.18.63',
+        'HOST': '3.25.119.204',
         'PORT': '3306',
         'USER': 'power_tu',
         'PASSWORD': 'power_password',
