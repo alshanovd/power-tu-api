@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'analysis',
     'corsheaders',
     "django_extensions",
+    'sslserver',
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
