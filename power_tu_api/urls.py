@@ -26,7 +26,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('analysis/', include('django.contrib.auth.urls')),
     re_path(r'^', include('analysis.urls')),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/accounts/', include('accounts.urls')),
+    path('accounts/', include('accounts.urls')),
 ]
