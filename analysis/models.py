@@ -2,12 +2,17 @@ from django.db import models
 
 
 # Create your models here.
-
+class Clients(models.Model):
+    client_id = models.AutoField(primary_key=True)
+    client_name = models.CharField(max_length=255)
+    def __str__(self):
+        return self.client_id
+    
 class Products(models.Model):
     product_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=50)
     price = models.FloatField()
-
+    client_id = models.ForeignKey(Clients, on_delete=models.CASCADE)
     def __str__(self):
         return self.product_id
 
@@ -19,7 +24,7 @@ class Orders(models.Model):
     user_country = models.CharField(max_length=50)
     user_name = models.CharField(max_length=50)
     status = models.CharField(max_length=50)
-
+    client_id = models.ForeignKey(Clients, on_delete=models.CASCADE)
     def __str__(self):
         return self.order_id
     

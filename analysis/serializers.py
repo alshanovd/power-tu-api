@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from analysis.models import Products, Orders, OrderedItems
+from analysis.models import Products, Orders, OrderedItems, Clients
+
+class ClientsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Clients
+        fields = '__all__'
 
 class ProductsSerializer(serializers.ModelSerializer):
     class Meta:
