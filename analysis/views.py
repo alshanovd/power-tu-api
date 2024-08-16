@@ -16,8 +16,8 @@ from analysis.serializers import ProductsSerializer, OrdersSerializer, OrderedIt
 #@permission_classes([IsAuthenticated])
 
 class Home(APIView):
-    # authentication_classes = [JWTAuthentication]
-    # permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         if request.method == 'GET':
             products = Products.objects.all()
