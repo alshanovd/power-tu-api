@@ -76,3 +76,30 @@ def ordersApi(request, id=0):
         return JsonResponse(orders, safe=False)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
+
+
+def annualRevenueApi(request):
+    if request.method == 'GET':
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT DATE_FORMAT(ao.timestamp, '%b %Y') AS month, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                FROM analysis_orders ao 
+                JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
+                JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
+                WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
+                GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), YEAR(ao.timestamp), MONTH(ao.timestamp) 
+                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC;
+            """)
+            rows = cursor.fetchall()
+
+        # Convert the results to a list of dictionaries
+        revenue = []
+        for row in rows:
+            revenue.append({
+                "year": row[0],
+                "revenue": row[1]
+            })
+
+        return JsonResponse(revenue, safe=False)
+    else:
+        return JsonResponse("Failed to Retrieve", safe=False)
