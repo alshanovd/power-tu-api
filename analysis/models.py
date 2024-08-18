@@ -1,7 +1,5 @@
 from django.db import models
 
-
-# Create your models here.
 class Clients(models.Model):
     client_id = models.AutoField(primary_key=True)
     client_name = models.CharField(max_length=255)
@@ -36,5 +34,3 @@ class OrderedItems(models.Model):
 
     def __str__(self):
         return self.id
-
-
