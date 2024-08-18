@@ -2,14 +2,13 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
-
+from django.db import connection
 
 from analysis.models import Products, Orders, OrderedItems
 from analysis.serializers import ProductsSerializer, OrdersSerializer, OrderedItemsSerializer
 
 
 @csrf_exempt
-
 def productsApi(request, id=0):
     if request.method == 'GET':
         products = Products.objects.all()
@@ -35,4 +34,12 @@ def productsApi(request, id=0):
         product.delete()
         return JsonResponse("Deleted Successfully", safe=False)
 
-# Create your views here.
+def countriesApi(request):
+    if request.method == 'GET':
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT DISTINCT user_country FROM analysis_orders")
+            countries = cursor.fetchall()
+            countries = [country[0] for country in countries]
+        return JsonResponse(countries, safe=False)
+    else:
+        return JsonResponse("Failed to Retrieve", safe=False)
