@@ -96,7 +96,7 @@ def annualRevenueApi(request):
         revenue = []
         for row in rows:
             revenue.append({
-                "year": row[0],
+                "month": row[0],
                 "revenue": row[1]
             })
 
