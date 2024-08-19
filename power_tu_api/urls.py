@@ -23,8 +23,7 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('analysis/', include('django.contrib.auth.urls')),
+    #path('admin/', admin.site.urls),
     re_path(r'^', include('analysis.urls')),
-    path('accounts/', include('accounts.urls')),
+    re_path(r'^', include('accounts.urls')),
 ]
