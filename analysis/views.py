@@ -14,25 +14,6 @@ def productsApi(request, id=0):
         products = Products.objects.all()
         products_serializer = ProductsSerializer(products, many=True)
         return JsonResponse(products_serializer.data, safe=False)
-    # elif request.method == 'POST':
-    #     product_data = JSONParser().parse(request)
-    #     products_serializer = ProductsSerializer(data=product_data)
-    #     if products_serializer.is_valid():
-    #         products_serializer.save()
-    #         return JsonResponse(products_serializer.data, safe=False)
-    #     return JsonResponse("Failed to Add", safe=False)
-    # elif request.method == 'PUT':
-    #     product_data = JSONParser().parse(request)
-    #     product = Products.objects.get(product_id=product_data['product_id'])
-    #     products_serializer = ProductsSerializer(product, data=product_data)
-    #     if products_serializer.is_valid():
-    #         products_serializer.save()
-    #         return JsonResponse(products_serializer.data, safe=False)
-    #     return JsonResponse("Failed to Update", safe=False)
-    # elif request.method == 'DELETE':
-    #     product = Products.objects.get(product_id=id)
-    #     product.delete()
-    #     return JsonResponse("Deleted Successfully", safe=False)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
@@ -103,3 +84,32 @@ def annualRevenueApi(request):
         return JsonResponse(revenue, safe=False)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
+    
+def annualRevenueByGenderApi(request):
+    if request.method == 'GET':
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT DATE_FORMAT(ao.timestamp, '%b %Y') AS month, ao.user_gender, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                FROM analysis_orders ao 
+                JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
+                JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
+                WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
+                GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), ao.user_gender, YEAR(ao.timestamp), MONTH(ao.timestamp) 
+                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.user_gender ASC;
+            """)
+            rows = cursor.fetchall()
+        
+        # Convert the results to a list of dictionaries
+        revenue = []
+        for row in rows:
+            revenue.append({
+                "month": row[0],
+                "gender": row[1],
+                "revenue": row[2]
+            })
+
+        return JsonResponse(revenue, safe=False)
+    else:
+        return JsonResponse("Failed to Retrieve", safe=False)
+    
+
