@@ -139,10 +139,10 @@ def totalItemsSoldApi(request):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT ap.name AS product_name, SUM(aoi.count) AS total_items_sold
+                SELECT ap.product_id, ap.name AS product_name, SUM(aoi.count) AS total_items_sold
                 FROM analysis_ordereditems aoi
                 JOIN analysis_products ap ON aoi.product_id_id = ap.product_id
-                GROUP BY ap.name
+                GROUP BY ap.product_id, ap.name
                 ORDER BY total_items_sold DESC;
             """)
             rows = cursor.fetchall()
@@ -151,8 +151,9 @@ def totalItemsSoldApi(request):
         total_sold = []
         for row in rows:
             total_sold.append({
-                "product_name": row[0],
-                "total_sold": row[1]
+                "id": row[0],
+                "product_name": row[1],
+                "total_sold": row[2]
             })
 
         return JsonResponse(total_sold, safe=False)
