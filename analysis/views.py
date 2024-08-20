@@ -63,7 +63,7 @@ def annualRevenueApi(request):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT DATE_FORMAT(ao.timestamp, '%b %Y') AS month, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
                 FROM analysis_orders ao 
                 JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
                 JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
@@ -89,7 +89,7 @@ def annualRevenueByGenderApi(request):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT DATE_FORMAT(ao.timestamp, '%b %Y') AS month, ao.user_gender, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.user_gender, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
                 FROM analysis_orders ao 
                 JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
                 JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
@@ -157,5 +157,30 @@ def totalItemsSoldApi(request):
             })
 
         return JsonResponse(total_sold, safe=False)
+    else:
+        return JsonResponse("Failed to Retrieve", safe=False)
+
+def statusesByMonths(request):
+    if request.method == 'GET':
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.status, COUNT(*) AS order_count
+                FROM analysis_orders ao
+                WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
+                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.status ASC;
+            """)
+            rows = cursor.fetchall()
+        
+        # Convert the results to a list of dictionaries
+        statuses = []
+        for row in rows:
+            statuses.append({
+                "month": row[0],
+                "status": row[1],
+                "count": row[2]
+            })
+
+        return JsonResponse(statuses, safe=False)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)

@@ -10,4 +10,5 @@ urlpatterns = [
     re_path(r'^annual-revenue-by-gender/$', views.annualRevenueByGenderApi),
     re_path(r'^order-status-count/$', views.orderStatusCountApi),
     re_path(r'^total-items-sold/$', views.totalItemsSoldApi),
+    re_path(r'^statuses-by-month/$', views.statusesByMonths),
 ]
