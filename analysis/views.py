@@ -134,3 +134,27 @@ def orderStatusCountApi(request):
         return JsonResponse(status_counts, safe=False)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
+
+def totalItemsSoldApi(request):
+    if request.method == 'GET':
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT ap.name AS product_name, SUM(aoi.count) AS total_items_sold
+                FROM analysis_ordereditems aoi
+                JOIN analysis_products ap ON aoi.product_id_id = ap.product_id
+                GROUP BY ap.name
+                ORDER BY total_items_sold DESC;
+            """)
+            rows = cursor.fetchall()
+        
+        # Convert the results to a list of dictionaries
+        total_sold = []
+        for row in rows:
+            total_sold.append({
+                "product_name": row[0],
+                "total_sold": row[1]
+            })
+
+        return JsonResponse(total_sold, safe=False)
+    else:
+        return JsonResponse("Failed to Retrieve", safe=False)
