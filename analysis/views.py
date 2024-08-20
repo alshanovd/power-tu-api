@@ -112,4 +112,25 @@ def annualRevenueByGenderApi(request):
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
     
+def orderStatusCountApi(request):
+    if request.method == 'GET':
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT status, COUNT(*) AS order_count
+                FROM analysis_orders
+                GROUP BY status
+                ORDER BY order_count DESC;
+            """)
+            rows = cursor.fetchall()
+        
+        # Convert the results to a list of dictionaries
+        status_counts = []
+        for row in rows:
+            status_counts.append({
+                "status": row[0],
+                "count": row[1]
+            })
 
+        return JsonResponse(status_counts, safe=False)
+    else:
+        return JsonResponse("Failed to Retrieve", safe=False)
