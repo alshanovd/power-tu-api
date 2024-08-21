@@ -63,13 +63,13 @@ def annualRevenueApi(request):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.user_country,ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
                 FROM analysis_orders ao 
                 JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
                 JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
                 WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
-                GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), YEAR(ao.timestamp), MONTH(ao.timestamp) 
-                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC;
+                GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), YEAR(ao.timestamp), MONTH(ao.timestamp), ao.user_country
+                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.user_country;
             """)
             rows = cursor.fetchall()
 
@@ -78,7 +78,8 @@ def annualRevenueApi(request):
         for row in rows:
             revenue.append({
                 "month": row[0],
-                "revenue": row[1]
+                "user_country": row[1],
+                "revenue": row[2]
             })
 
         return JsonResponse(revenue, safe=False)
@@ -89,13 +90,13 @@ def annualRevenueByGenderApi(request):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.user_gender, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.user_country, ao.user_gender, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
                 FROM analysis_orders ao 
                 JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
                 JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
                 WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
                 GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), ao.user_gender, YEAR(ao.timestamp), MONTH(ao.timestamp) 
-                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.user_gender ASC;
+                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.user_country, ao.user_gender ASC;
             """)
             rows = cursor.fetchall()
         
@@ -104,8 +105,9 @@ def annualRevenueByGenderApi(request):
         for row in rows:
             revenue.append({
                 "month": row[0],
-                "gender": row[1],
-                "revenue": row[2]
+                "user_country": row[1],
+                "gender": row[2],
+                "revenue": row[3]
             })
 
         return JsonResponse(revenue, safe=False)
