@@ -73,18 +73,31 @@ def ordersApi(request, id=0):
         return JsonResponse("Failed to Retrieve", safe=False)
 
 
-def annualRevenueApi(request, return_array=False):
+def annualRevenueApi(request, country, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.user_country,ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
-                FROM analysis_orders ao 
-                JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
-                JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
-                WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
-                GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), YEAR(ao.timestamp), MONTH(ao.timestamp), ao.user_country
-                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.user_country;
-            """)
+            if country == 'Global':
+                query = """
+                        SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                        FROM analysis_orders ao 
+                        JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
+                        JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
+                        WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
+                        GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), YEAR(ao.timestamp), MONTH(ao.timestamp)
+                        ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC;
+                        """
+                cursor.execute(query)
+            else:
+                query = """
+                        SELECT DATE_FORMAT(ao.timestamp, '%%b %%y') AS month,ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                        FROM analysis_orders ao 
+                        JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
+                        JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
+                        WHERE ao.user_country = %s AND ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
+                        GROUP BY DATE_FORMAT(ao.timestamp, '%%b %%Y'), YEAR(ao.timestamp), MONTH(ao.timestamp)
+                        ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC;
+                        """
+                cursor.execute(query,[country])
             rows = cursor.fetchall()
 
         # Convert the results to a list of dictionaries
@@ -92,8 +105,7 @@ def annualRevenueApi(request, return_array=False):
         for row in rows:
             revenue.append({
                 "month": row[0],
-                "user_country": row[1],
-                "revenue": row[2]
+                "revenue": row[1]
             })
 
         if return_array == False:
@@ -103,18 +115,31 @@ def annualRevenueApi(request, return_array=False):
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
     
-def annualRevenueByGenderApi(request, return_array=False):
+def annualRevenueByGenderApi(request, country, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.user_country, ao.user_gender, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
-                FROM analysis_orders ao 
-                JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
-                JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
-                WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
-                GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), ao.user_gender, YEAR(ao.timestamp), MONTH(ao.timestamp) 
-                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.user_country, ao.user_gender ASC;
-            """)
+            if country == 'Global':
+                query = """
+                        SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.user_gender, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                        FROM analysis_orders ao 
+                        JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
+                        JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
+                        WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
+                        GROUP BY DATE_FORMAT(ao.timestamp, '%b %Y'), ao.user_gender, YEAR(ao.timestamp), MONTH(ao.timestamp) 
+                        ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.user_gender ASC;
+                        """
+                cursor.execute(query)
+            else:
+                query = """
+                        SELECT DATE_FORMAT(ao.timestamp, '%%b %%y') AS month, ao.user_gender, ROUND(SUM(aoi.count * ap.price), 2) AS total_revenue 
+                        FROM analysis_orders ao 
+                        JOIN analysis_ordereditems aoi ON ao.order_id = aoi.order_id_id 
+                        JOIN analysis_products ap ON aoi.product_id_id = ap.product_id 
+                        WHERE ao.user_country = %s AND ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR) 
+                        GROUP BY DATE_FORMAT(ao.timestamp, '%%b %%Y'), ao.user_gender, YEAR(ao.timestamp), MONTH(ao.timestamp) 
+                        ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.user_gender ASC;
+                        """
+                cursor.execute(query,[country])
             rows = cursor.fetchall()
         
         # Convert the results to a list of dictionaries
@@ -122,9 +147,8 @@ def annualRevenueByGenderApi(request, return_array=False):
         for row in rows:
             revenue.append({
                 "month": row[0],
-                "user_country": row[1],
-                "gender": row[2],
-                "revenue": row[3]
+                "gender": row[1],
+                "revenue": row[2]
             })
 
         if revenue == False:
@@ -134,15 +158,26 @@ def annualRevenueByGenderApi(request, return_array=False):
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
     
-def orderStatusCountApi(request, return_array=False):
+def orderStatusCountApi(request, country, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT status, COUNT(*) AS order_count
-                FROM analysis_orders
-                GROUP BY status
-                ORDER BY order_count DESC;
-            """)
+            if country == 'Global':
+                query = """
+                        SELECT status, COUNT(*) AS order_count
+                        FROM analysis_orders
+                        GROUP BY status
+                        ORDER BY order_count DESC;
+                        """
+                cursor.execute(query)
+            else:
+                query = """
+                        SELECT status, COUNT(*) AS order_count
+                        FROM analysis_orders
+                        WHERE user_country = %s
+                        GROUP BY status
+                        ORDER BY order_count DESC;
+                        """
+                cursor.execute(query,[country])
             rows = cursor.fetchall()
         
         # Convert the results to a list of dictionaries
@@ -160,16 +195,30 @@ def orderStatusCountApi(request, return_array=False):
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
-def totalItemsSoldApi(request, return_array=False):
+def totalItemsSoldApi(request, country, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT ap.product_id, ap.name AS product_name, SUM(aoi.count) AS total_items_sold
-                FROM analysis_ordereditems aoi
-                JOIN analysis_products ap ON aoi.product_id_id = ap.product_id
-                GROUP BY ap.product_id, ap.name
-                ORDER BY total_items_sold DESC;
-            """)
+            if country == 'Global':
+                query = """
+                        SELECT ap.product_id, ap.name AS product_name, SUM(aoi.count) AS total_items_sold
+                        FROM analysis_ordereditems aoi
+                        JOIN analysis_products ap ON aoi.product_id_id = ap.product_id
+                        JOIN analysis_orders ao on ao.order_id = aoi.order_id_id
+                        GROUP BY ap.product_id, ap.name
+                        ORDER BY total_items_sold DESC;
+                        """
+                cursor.execute(query)
+            else:
+                query = """
+                        SELECT ap.product_id, ap.name AS product_name, SUM(aoi.count) AS total_items_sold
+                        FROM analysis_ordereditems aoi
+                        JOIN analysis_products ap ON aoi.product_id_id = ap.product_id
+                        JOIN analysis_orders ao on ao.order_id = aoi.order_id_id
+                        WHERE ao.user_country = %s
+                        GROUP BY ap.product_id, ap.name
+                        ORDER BY total_items_sold DESC;
+                        """
+                cursor.execute(query,[country])
             rows = cursor.fetchall()
         
         # Convert the results to a list of dictionaries
@@ -188,16 +237,29 @@ def totalItemsSoldApi(request, return_array=False):
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
-def statusesByMonths(request, return_array=False):
+def statusesByMonths(request, country, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.status, COUNT(*) AS order_count
-                FROM analysis_orders ao
-                WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
-                GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
-                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, ao.status ASC;
-            """)
+            if country == 'Global':
+                # SQL query for global data (all countries)
+                query = """
+                    SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.status, COUNT(*) AS order_count
+                    FROM analysis_orders ao
+                    WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                    GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
+                    ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, order_count DESC, ao.status ASC;
+                """
+                cursor.execute(query)
+            else:
+                # SQL query for a specific country
+                query = """
+                    SELECT DATE_FORMAT(ao.timestamp, '%%b %%y') AS month, ao.status, COUNT(*) AS order_count
+                    FROM analysis_orders ao
+                    WHERE ao.user_country = %s AND ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                    GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
+                    ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, order_count DESC, ao.status ASC;
+                """
+                cursor.execute(query, [country])
             rows = cursor.fetchall()
         
         # Convert the results to a list of dictionaries
@@ -228,25 +290,25 @@ def aiAssistance(request):
         report = requestData.get('report') # total-revenue, revenue-by-gender, order-status, products-sold, status-statistics
         prompt = requestData.get('prompt', '')
 
-        request.path = request.path + '/' + country + '/'
+        # request.path = request.path + '/' + country + '/'
         if report == 'total-revenue':
             request.method = 'GET'
             prompt = prompt + ". Write something about total revenue."
-            data = annualRevenueApi(request, True)
+            data = annualRevenueApi(request, country, True)
         elif report == 'revenue-by-gender':
             prompt = prompt + ". Write something about genders."
             request.method = 'GET'
-            data = annualRevenueByGenderApi(request, True)
+            data = annualRevenueByGenderApi(request, country, True)
         elif report == 'order-status':
             prompt = prompt + ". Write something about order statuses."
             request.method = 'GET'
-            data = orderStatusCountApi(request, True)
+            data = orderStatusCountApi(request, country, True)
         elif report == 'products-sold':
             request.method = 'GET'
-            data = totalItemsSoldApi(request, True)
+            data = totalItemsSoldApi(request, country, True)
         elif report == 'status-statistics':
             request.method = 'GET'
-            data = statusesByMonths(request, True)
+            data = statusesByMonths(request, country, True)
 
         data_string = " ".join([str(x) for x in data])
 
