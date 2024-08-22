@@ -174,7 +174,7 @@ def statusesByMonths(request, country):
             if country == 'Global':
                 # SQL query for global data (all countries)
                 query = """
-                    SELECT DATE_FORMAT(ao.timestamp, '%%b %%y') AS month, ao.status, COUNT(*) AS order_count
+                    SELECT DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.status, COUNT(*) AS order_count
                     FROM analysis_orders ao
                     WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
                     GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
