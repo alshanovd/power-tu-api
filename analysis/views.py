@@ -65,10 +65,7 @@ def ordersApi(request, id=0):
                 "total_price": row[6]
             })
 
-        if orders == False:
-            return JsonResponse(orders, safe=False)
-        else:
-            return orders
+        return JsonResponse(orders, safe=False)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
