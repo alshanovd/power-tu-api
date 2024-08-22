@@ -165,28 +165,52 @@ def totalItemsSoldApi(request):
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
-def statusesByMonths(request):
+def statusesByMonths(request, country):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT ao.user_country, DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.status, COUNT(*) AS order_count
+                SELECT DATE_FORMAT(ao.timestamp, '%%b %%y') AS month, ao.status, COUNT(*) AS order_count
                 FROM analysis_orders ao
-                WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
-                GROUP BY ao.user_country, YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
-                ORDER BY ao.user_country, YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, order_count DESC, ao.status ASC;
-            """)
+                WHERE ao.user_country = %s AND ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
+                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, order_count DESC, ao.status ASC;
+            """, [country])
             rows = cursor.fetchall()
-        
-        # Convert the results to a list of dictionaries
+
         statuses = []
         for row in rows:
             statuses.append({
-                "user_country": row[0],
-                "month": row[1],
-                "status": row[2],
-                "count": row[3]
+                "month": row[0],
+                "status": row[1],
+                "count": row[2]
             })
 
         return JsonResponse(statuses, safe=False)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
+
+# def statusesByMonths(request):
+#     if request.method == 'GET':
+#         with connection.cursor() as cursor:
+#             cursor.execute("""
+#                 SELECT ao.user_country, DATE_FORMAT(ao.timestamp, '%b %y') AS month, ao.status, COUNT(*) AS order_count
+#                 FROM analysis_orders ao
+#                 WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+#                 GROUP BY ao.user_country, YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
+#                 ORDER BY ao.user_country, YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, order_count DESC, ao.status ASC;
+#             """)
+#             rows = cursor.fetchall()
+        
+#         # Convert the results to a list of dictionaries
+#         statuses = []
+#         for row in rows:
+#             statuses.append({
+#                 "user_country": row[0],
+#                 "month": row[1],
+#                 "status": row[2],
+#                 "count": row[3]
+#             })
+
+#         return JsonResponse(statuses, safe=False)
+#     else:
+#         return JsonResponse("Failed to Retrieve", safe=False)
