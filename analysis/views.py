@@ -165,16 +165,33 @@ def totalItemsSoldApi(request):
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
+from django.http import JsonResponse
+from django.db import connection
+
 def statusesByMonths(request, country):
     if request.method == 'GET':
         with connection.cursor() as cursor:
-            cursor.execute("""
-                SELECT DATE_FORMAT(ao.timestamp, '%%b %%y') AS month, ao.status, COUNT(*) AS order_count
-                FROM analysis_orders ao
-                WHERE ao.user_country = %s AND ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
-                GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
-                ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, order_count DESC, ao.status ASC;
-            """, [country])
+            if country == 'Global':
+                # SQL query for global data (all countries)
+                query = """
+                    SELECT DATE_FORMAT(ao.timestamp, '%%b %%y') AS month, ao.status, COUNT(*) AS order_count
+                    FROM analysis_orders ao
+                    WHERE ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                    GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
+                    ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, order_count DESC, ao.status ASC;
+                """
+                cursor.execute(query)
+            else:
+                # SQL query for a specific country
+                query = """
+                    SELECT DATE_FORMAT(ao.timestamp, '%%b %%y') AS month, ao.status, COUNT(*) AS order_count
+                    FROM analysis_orders ao
+                    WHERE ao.user_country = %s AND ao.timestamp >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+                    GROUP BY YEAR(ao.timestamp), MONTH(ao.timestamp), ao.status
+                    ORDER BY YEAR(ao.timestamp) ASC, MONTH(ao.timestamp) ASC, order_count DESC, ao.status ASC;
+                """
+                cursor.execute(query, [country])
+
             rows = cursor.fetchall()
 
         statuses = []
@@ -188,6 +205,7 @@ def statusesByMonths(request, country):
         return JsonResponse(statuses, safe=False)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
+
 
 # def statusesByMonths(request):
 #     if request.method == 'GET':
