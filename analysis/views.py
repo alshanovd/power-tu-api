@@ -6,7 +6,10 @@ from django.db import connection
 
 from analysis.models import Products, Orders, OrderedItems
 from analysis.serializers import ProductsSerializer, OrdersSerializer, OrderedItemsSerializer
+import openai
+import json
 
+openai.api_key = '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'
 
 @csrf_exempt
 def productsApi(request, id=0):
@@ -54,12 +57,15 @@ def ordersApi(request, id=0):
                 "total_price": row[6]
             })
 
-        return JsonResponse(orders, safe=False)
+        if orders == False:
+            return JsonResponse(orders, safe=False)
+        else:
+            return orders
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
 
-def annualRevenueApi(request):
+def annualRevenueApi(request, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -82,11 +88,14 @@ def annualRevenueApi(request):
                 "revenue": row[2]
             })
 
-        return JsonResponse(revenue, safe=False)
+        if return_array == False:
+            return JsonResponse(revenue, safe=False)
+        else:
+            return revenue
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
     
-def annualRevenueByGenderApi(request):
+def annualRevenueByGenderApi(request, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -110,11 +119,14 @@ def annualRevenueByGenderApi(request):
                 "revenue": row[3]
             })
 
-        return JsonResponse(revenue, safe=False)
+        if revenue == False:
+            return JsonResponse(revenue, safe=False)
+        else:
+            return revenue
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
     
-def orderStatusCountApi(request):
+def orderStatusCountApi(request, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -133,11 +145,14 @@ def orderStatusCountApi(request):
                 "count": row[1]
             })
 
-        return JsonResponse(status_counts, safe=False)
+        if return_array == False:
+            return JsonResponse(status_counts, safe=False)
+        else:
+            return status_counts
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
-def totalItemsSoldApi(request):
+def totalItemsSoldApi(request, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -158,11 +173,14 @@ def totalItemsSoldApi(request):
                 "total_sold": row[2]
             })
 
-        return JsonResponse(total_sold, safe=False)
+        if return_array == False:
+            return JsonResponse(total_sold, safe=False)
+        else:
+            return total_sold
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
 
-def statusesByMonths(request):
+def statusesByMonths(request, return_array=False):
     if request.method == 'GET':
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -183,6 +201,63 @@ def statusesByMonths(request):
                 "count": row[2]
             })
 
-        return JsonResponse(statuses, safe=False)
+        if return_array == False:
+            return JsonResponse(statuses, safe=False)
+        else:
+            return statuses
+    else:
+        return JsonResponse("Failed to Retrieve", safe=False)
+
+@csrf_exempt
+def aiAssistance(request):
+    if request.method == 'POST':
+        try:
+            requestData = JSONParser().parse(request)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        country = requestData.get('country')
+        report = requestData.get('report') # total-revenue, revenue-by-gender, order-status, products-sold, status-statistics
+        prompt = requestData.get('prompt', '')
+
+        request.path = request.path + '/' + country + '/'
+        if report == 'total-revenue':
+            request.method = 'GET'
+            prompt = prompt + ". Write something about total revenue."
+            data = annualRevenueApi(request, True)
+        elif report == 'revenue-by-gender':
+            prompt = prompt + ". Write something about genders."
+            request.method = 'GET'
+            data = annualRevenueByGenderApi(request, True)
+        elif report == 'order-status':
+            prompt = prompt + ". Write something about order statuses."
+            request.method = 'GET'
+            data = orderStatusCountApi(request, True)
+        elif report == 'products-sold':
+            request.method = 'GET'
+            data = totalItemsSoldApi(request, True)
+        elif report == 'status-statistics':
+            request.method = 'GET'
+            data = statusesByMonths(request, True)
+
+        data_string = " ".join([str(x) for x in data])
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Specify the model, e.g., 'gpt-4', 'gpt-3.5-turbo'
+            messages=[
+                {"role": "system", "content": "You are an expert in sales data analysis."},
+                {"role": "user", "content": "Name of the report - " + report + ". Give me some insights about the report. Provide a report in pure json format without your comments above or below. Additional prompt - " + prompt + ". Fields in the top level: insights - string array, recommendations - string array, comment - string. Here is the Data to analyze - " + data_string },
+            ]
+        )
+
+        chatgpt_content = response['choices'][0]['message']['content']
+        
+        try:
+            json_content = json.loads(chatgpt_content)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "ChatGPT did not return valid JSON"}, status=400)
+
+
+        return JsonResponse(json_content)
     else:
         return JsonResponse("Failed to Retrieve", safe=False)
