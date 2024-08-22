@@ -150,6 +150,11 @@ def annualRevenueByGenderApi(request, country, return_array=False):
                 "gender": row[1],
                 "revenue": row[2]
             })
+        
+        if return_array == False:
+            return JsonResponse(revenue, safe=False)
+        else:
+            return revenue
 
         if revenue == False:
             return JsonResponse(revenue, safe=False)
