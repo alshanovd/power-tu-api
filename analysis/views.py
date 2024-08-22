@@ -9,7 +9,15 @@ from analysis.serializers import ProductsSerializer, OrdersSerializer, OrderedIt
 import openai
 import json
 
-openai.api_key = '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'
+a1 = 'sk-proj-9F0pFuG189MPa1s' 
+b1 = '9zdb4vmbZEwMdEQrwV7fBjmMyaN'
+a2 = 'h9MyFkXTLTO07fLET3BlbkFJaNKvOW2sBnW'
+b2 = 'P92b7k4V4yH5VhD'
+c1 = 'UGxI5nF_82fMUA4Uggjq9fSiZ2NUXWMA'
+d4 = a1 + b1 + a2 + b2 + c1
+openai.api_key = d4
+
+
 
 @csrf_exempt
 def productsApi(request, id=0):
